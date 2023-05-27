@@ -73,11 +73,13 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         checkPositive(nThreads, "nThreads");
 
         if (executor == null) {
+            // 如果传入的执行器是空的则采用默认的线程工厂和默认的执行器
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
-
+        // 创建指定线程数的执行器数组
         children = new EventExecutor[nThreads];
 
+        // 初始化线程数组
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
@@ -87,6 +89,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
                 // TODO: Think about if this is a good exception type
                 throw new IllegalStateException("failed to create a child event loop", e);
             } finally {
+                // 如果创建失败，优雅关闭
                 if (!success) {
                     for (int j = 0; j < i; j ++) {
                         children[j].shutdownGracefully();
@@ -118,12 +121,13 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
                 }
             }
         };
-
+        // 为每一个单例线程池添加一个关闭监听器
         for (EventExecutor e: children) {
             e.terminationFuture().addListener(terminationListener);
         }
 
         Set<EventExecutor> childrenSet = new LinkedHashSet<EventExecutor>(children.length);
+        //将所有的单例线程池添加到一个 HashSet 中。
         Collections.addAll(childrenSet, children);
         readonlyChildren = Collections.unmodifiableSet(childrenSet);
     }

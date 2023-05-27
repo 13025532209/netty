@@ -211,7 +211,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             setChannelOptions(child, childOptions, logger);
             setAttributes(child, childAttrs);
 
-            try {
+            try {//将客户端连接注册到 worker 线程池
                 childGroup.register(child).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {
