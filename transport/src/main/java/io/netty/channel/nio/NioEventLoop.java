@@ -111,14 +111,17 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             logger.debug("-Dio.netty.selectorAutoRebuildThreshold: {}", SELECTOR_AUTO_REBUILD_THRESHOLD);
         }
     }
-
+    /**
+     * 作为 NIO框架 的 Reactor线程，NioEventLoop 需要处理 网络I/O读写事件，因此它必
+     * 须聚合一个多路复用器对象 Selector
+     */
     /**
      * The NIO {@link Selector}.
      */
     private Selector selector;
     private Selector unwrappedSelector;
     private SelectedSelectionKeySet selectedKeys;
-
+    // 通过 provider.open() 从操作系统底层获取 Selector实例
     private final SelectorProvider provider;
 
     private static final long AWAKE = -1L;
@@ -644,7 +647,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             // Ignore.
         }
     }
-
+    /**
+     * 轮询 事件就绪的channel，进行 IO事件处理
+     */
     private void processSelectedKeys() {
         if (selectedKeys != null) {
             processSelectedKeysOptimized();
@@ -739,7 +744,11 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
+    /**
+     * 轮询 事件就绪的channel，进行 IO事件处理
+     */
     private void processSelectedKey(SelectionKey k, AbstractNioChannel ch) {
+        // 获取 channel 的内部辅助类 Unsafe，通过 Unsafe 进行IO事件处理
         final AbstractNioChannel.NioUnsafe unsafe = ch.unsafe();
         if (!k.isValid()) {
             final EventLoop eventLoop;
