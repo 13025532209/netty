@@ -38,5 +38,7 @@ public class EchoServer {
                         });
                     }
                 }).bind(8080);
+//        NioEventLoopGroup eventExecutors = new NioEventLoopGroup();
+//        eventExecutors.shutdownGracefully();
     }
 }

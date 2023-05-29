@@ -65,6 +65,7 @@ public abstract class AbstractEventExecutorGroup implements EventExecutorGroup {
         return next().scheduleWithFixedDelay(command, initialDelay, delay, unit);
     }
 
+    // 优雅关闭
     @Override
     public Future<?> shutdownGracefully() {
         return shutdownGracefully(DEFAULT_SHUTDOWN_QUIET_PERIOD, DEFAULT_SHUTDOWN_TIMEOUT, TimeUnit.SECONDS);

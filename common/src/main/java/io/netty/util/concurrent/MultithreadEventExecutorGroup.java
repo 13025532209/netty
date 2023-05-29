@@ -34,8 +34,10 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
 
     private final EventExecutor[] children;
     private final Set<EventExecutor> readonlyChildren;
+    // 已经终止的子事件执行器数量
     private final AtomicInteger terminatedChildren = new AtomicInteger();
     private final Promise<?> terminationFuture = new DefaultPromise(GlobalEventExecutor.INSTANCE);
+    // 从子执行器数组中获取下一个子执行器
     private final EventExecutorChooserFactory.EventExecutorChooser chooser;
 
     /**
@@ -83,25 +85,30 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
+                // 调用子类创建子执行器的方法完成初始化
+                // (为什这样设计的原因很简单，当前类不知道子执行器的实例是谁，只知道需要创建，这里再一次展现了抽象方法的魅力）
                 children[i] = newChild(executor, args);
                 success = true;
             } catch (Exception e) {
+                // 创建出现异常，则包装异常对象
                 // TODO: Think about if this is a good exception type
                 throw new IllegalStateException("failed to create a child event loop", e);
             } finally {
-                // 如果创建失败，优雅关闭
+                // 只要任一子执行器创建实例失败，就要全部关闭
                 if (!success) {
                     for (int j = 0; j < i; j ++) {
                         children[j].shutdownGracefully();
                     }
 
                     for (int j = 0; j < i; j ++) {
+                        // 当前线程等待子执行器全部关闭
                         EventExecutor e = children[j];
                         try {
                             while (!e.isTerminated()) {
                                 e.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
                             }
                         } catch (InterruptedException interrupted) {
+                            // 等待期间被中断唤醒重置当前线程中断标志位 (中断异常会消耗标志位)，由调用方处理该中断
                             // Let the caller handle the interruption.
                             Thread.currentThread().interrupt();
                             break;
@@ -110,9 +117,12 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
                 }
             }
         }
-
+        // 通过工厂创建选择器
         chooser = chooserFactory.newChooser(children);
 
+        // 创建终止监听器，并将该监听器放入子执行器中。该监听器在操作完成时，
+        // 对当前类的terminatedChildren 终止线程数进行自增，最后一个子执行器执行完毕后，
+        // 把 terminationFuture 的成功结果设为 null，表示终止完成
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {
             @Override
             public void operationComplete(Future<Object> future) throws Exception {
@@ -125,7 +135,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         for (EventExecutor e: children) {
             e.terminationFuture().addListener(terminationListener);
         }
-
+        // 创建完成执行器数组后，就把它设置为只读执行器，不允许任何修改
         Set<EventExecutor> childrenSet = new LinkedHashSet<EventExecutor>(children.length);
         //将所有的单例线程池添加到一个 HashSet 中。
         Collections.addAll(childrenSet, children);
