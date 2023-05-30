@@ -15,6 +15,7 @@
  */
 package io.netty.util.concurrent;
 
+// 标识接口表明执行提交的任务具有顺序性
 /**
  * Marker interface for {@link EventExecutor}s that will process all submitted tasks in an ordered / serial fashion.
  */

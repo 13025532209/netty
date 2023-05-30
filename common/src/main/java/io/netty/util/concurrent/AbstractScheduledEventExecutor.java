@@ -117,7 +117,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     private static boolean isNullOrEmpty(Queue<ScheduledFutureTask<?>> queue) {
         return queue == null || queue.isEmpty();
     }
-
+    // 取消所有周期性调度任务
     /**
      * Cancel all scheduled tasks.
      *
@@ -125,18 +125,19 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
      */
     protected void cancelScheduledTasks() {
         assert inEventLoop();
+        // 获取周期性任务队列。如果队列为空，则直接返回
         PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue = this.scheduledTaskQueue;
         if (isNullOrEmpty(scheduledTaskQueue)) {
             return;
         }
-
+        // 将周期性任务队列中的任务转为数组，并遍历该数组并取消执行
         final ScheduledFutureTask<?>[] scheduledTasks =
                 scheduledTaskQueue.toArray(new ScheduledFutureTask<?>[0]);
 
         for (ScheduledFutureTask<?> task: scheduledTasks) {
             task.cancelWithoutRemove(false);
         }
-
+        // 将周期性任务队列清空
         scheduledTaskQueue.clearIgnoringIndexes();
     }
 
