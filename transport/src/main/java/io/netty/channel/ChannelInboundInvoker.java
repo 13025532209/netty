@@ -24,6 +24,7 @@ public interface ChannelInboundInvoker {
      * called of the next  {@link ChannelInboundHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
+    // 通道注册到EventLoop 时回调该方法
     ChannelInboundInvoker fireChannelRegistered();
 
     /**
@@ -33,6 +34,7 @@ public interface ChannelInboundInvoker {
      * called of the next  {@link ChannelInboundHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
+    // 通道从所属 EventLoop 解除注册时回调该方法
     ChannelInboundInvoker fireChannelUnregistered();
 
     /**
@@ -42,6 +44,7 @@ public interface ChannelInboundInvoker {
      * called of the next  {@link ChannelInboundHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
+    // 通道激活时回调，即通道已经连接
     ChannelInboundInvoker fireChannelActive();
 
     /**
@@ -51,6 +54,7 @@ public interface ChannelInboundInvoker {
      * called of the next  {@link ChannelInboundHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
+    // 通道激活时回调，即通道已经关闭
     ChannelInboundInvoker fireChannelInactive();
 
     /**
@@ -60,6 +64,7 @@ public interface ChannelInboundInvoker {
      * method  called of the next  {@link ChannelInboundHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
+    // 通道执行异常时回调
     ChannelInboundInvoker fireExceptionCaught(Throwable cause);
 
     /**
@@ -69,6 +74,7 @@ public interface ChannelInboundInvoker {
      * method  called of the next  {@link ChannelInboundHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
+    // 通道收到用户自定义事件时回调
     ChannelInboundInvoker fireUserEventTriggered(Object event);
 
     /**
@@ -78,17 +84,20 @@ public interface ChannelInboundInvoker {
      * method  called of the next {@link ChannelInboundHandler} contained in the  {@link ChannelPipeline} of the
      * {@link Channel}.
      */
+    // 通道收到数据时回调
     ChannelInboundInvoker fireChannelRead(Object msg);
 
     /**
      * Triggers an {@link ChannelInboundHandler#channelReadComplete(ChannelHandlerContext)}
      * event to the next {@link ChannelInboundHandler} in the {@link ChannelPipeline}.
      */
+    // 通道收到完整数据时回调
     ChannelInboundInvoker fireChannelReadComplete();
 
     /**
      * Triggers an {@link ChannelInboundHandler#channelWritabilityChanged(ChannelHandlerContext)}
      * event to the next {@link ChannelInboundHandler} in the {@link ChannelPipeline}.
      */
+    // 通道是否可写在发生变化时回调
     ChannelInboundInvoker fireChannelWritabilityChanged();
 }

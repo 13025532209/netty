@@ -79,11 +79,13 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
     /**
      * Returns the globally unique identifier of this {@link Channel}.
      */
+    // 当前通道唯一id
     ChannelId id();
 
     /**
      * Return the {@link EventLoop} this {@link Channel} was registered to.
      */
+    // 所注册到的事件循环组
     EventLoop eventLoop();
 
     /**
@@ -92,6 +94,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
      * @return the parent channel.
      *         {@code null} if this channel does not have a parent channel.
      */
+    // 父通道对象
     Channel parent();
 
     /**
@@ -180,6 +183,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
     /**
      * Return the assigned {@link ChannelPipeline}.
      */
+    // 获取当前关联的 ChannelPipeline 通道流水线线实例
     ChannelPipeline pipeline();
 
     /**
