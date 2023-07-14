@@ -389,6 +389,7 @@ public class HashedWheelTimer implements Timer {
                 throw new Error("Invalid WorkerState");
         }
 
+        // startTime 初始就是0，一定会先进一次循环
         // 等待worker线程初始化时间轮的启动时间
         // Wait until the startTime is initialized by the worker.
         while (startTime == 0) {
@@ -533,7 +534,7 @@ public class HashedWheelTimer implements Timer {
                     processCancelledTasks();
                     HashedWheelBucket bucket =
                             wheel[idx];
-                    // 从任务队列中取出任务加入到对应的格子中
+                    // newTimeout方法添加的任务， 从timeouts任务队列中取出任务加入到对应的格子中
                     transferTimeoutsToBuckets();
                     // 过期执行格子中的任务
                     bucket.expireTimeouts(deadline);
@@ -596,6 +597,7 @@ public class HashedWheelTimer implements Timer {
             }
         }
 
+        // 将取消的任务取出，并从格子中移除
         private void processCancelledTasks() {
             for (;;) {
                 HashedWheelTimeout timeout = cancelledTimeouts.poll();
@@ -619,14 +621,21 @@ public class HashedWheelTimer implements Timer {
          * @return Long.MIN_VALUE if received a shutdown request,
          * current time otherwise (with Long.MIN_VALUE changed by +1)
          */
+        //sleep, 直到下次tick到来, 然后返回该次tick和启动时间之间的时长
         private long waitForNextTick() {
+            //下次tick的时间点, 用于计算需要sleep的时间
             long deadline = tickDuration * (tick + 1);
 
             for (;;) {
+                // 计算需要sleep的时间, 之所以加999999后再除10000000, 是为了保证足够的sleep时间
+                // 例如：当deadline - currentTime=2000002的时候，如果不加999999，则只睡了2ms，
+                // 而2ms其实是未到达deadline这个时间点的，所有为了使上述情况能sleep足够的时间，加上999999后，会多睡1ms
                 final long currentTime = System.nanoTime() - startTime;
                 long sleepTimeMs = (deadline - currentTime + 999999) / 1000000;
 
                 if (sleepTimeMs <= 0) {
+                    // 以下为个人理解：（如有错误，欢迎大家指正）
+                    // 这里的意思应该是从时间轮启动到现在经过太长的时间(跨度大于292年...)，以至于让long装不下，都溢出了...
                     if (currentTime == Long.MIN_VALUE) {
                         return -Long.MAX_VALUE;
                     } else {
@@ -640,6 +649,7 @@ public class HashedWheelTimer implements Timer {
                 //
                 // See https://github.com/netty/netty/issues/356
                 if (PlatformDependent.isWindows()) {
+                    // 这里是因为windows平台的定时调度最小单位为10ms，如果不是10ms的倍数，可能会引起sleep时间不准确
                     sleepTimeMs = sleepTimeMs / 10 * 10;
                     if (sleepTimeMs == 0) {
                         sleepTimeMs = 1;
@@ -649,6 +659,7 @@ public class HashedWheelTimer implements Timer {
                 try {
                     Thread.sleep(sleepTimeMs);
                 } catch (InterruptedException ignored) {
+                    // 调用HashedWheelTimer.stop()时优雅退出
                     if (WORKER_STATE_UPDATER.get(HashedWheelTimer.this) == WORKER_STATE_SHUTDOWN) {
                         return Long.MIN_VALUE;
                     }
